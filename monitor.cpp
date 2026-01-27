@@ -5,6 +5,8 @@
 #include <cerrno>
 #include <ncurses.h>
 #include <map>
+#include <chrono>
+#include <thread>
 
 
 // Struktury danych
@@ -103,11 +105,67 @@ void read_cpus(STATE &state){
         if(config.count("cache size")) { state.cpus.cachesize = config["cache size"]; }
 }
 
+
+void print_res(STATE &state){
+	int max_x, max_y;
+    getmaxyx(stdscr, max_y, max_x);
+	
+	for(int i=0; i<186; i++){
+		mvprintw(0, i, "_");
+    }
+
+    attron(A_REVERSE | A_BOLD);
+    mvprintw(1, 85, "MONITOR ZASOBOW");
+    attroff(A_REVERSE | A_BOLD);
+
+
+    for(int i=0; i<186; i++){
+		mvprintw(2, i, "_");
+    }
+	
+	for(int i=3; i<46; i++){
+		mvprintw(i, 62, "|");
+    }
+
+    mvprintw(3, 20, "MEMORY");
+	
+	for(int i=0; i<62; i++){
+		mvprintw(4, i, "_");
+	}
+	
+    mvprintw(5, 0, "Total RAM: %d", state.mem.tot);
+    printw(" KB = %.2f MB = %.2f GB", static_cast<float> (state.mem.tot / 1000.0), static_cast<float> (state.mem.tot / 1000000.0));
+    mvprintw(6, 0, "Available RAM: %d", state.mem.av);
+    printw(" KB = %.2f MB = %.2f GB", static_cast<float> (state.mem.av / 1000.0), static_cast<float> (state.mem.av / 1000000.0));
+
+}
+
+
 int main(){
+	
+	initscr();
+    cbreak();
+    noecho();
+    curs_set(0);
+    nodelay(stdscr, TRUE);
 
-        STATE state;
-        read_mem(state);
-        read_cpus(state);
+    char ch = getch();
 
-        return 0;
+    while(true){
+		char ch = getch();
+        if(ch == 'q'){
+                break;
+        }
+        else{
+                STATE state;
+
+                read_mem(state);
+                read_cpus(state);
+
+                print_res(state);
+                refresh();
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+	}	
+	return 0;
 }
