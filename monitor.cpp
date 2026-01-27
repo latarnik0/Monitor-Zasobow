@@ -1,84 +1,113 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <cmath>
-#include <vector>
 #include <iostream>
 #include <cerrno>
 #include <ncurses.h>
-#include <thread>
+#include <map>
 
-using namespace std;
 
-// funkcja zamiany ciągu znaków na int do dalszej manipulacji
-int myAtoi(string s){
-	int d;
-    	int m;
-    	int result = 0;
-    	std::vector<int> v;
-    	for(int i=0;i<s.length();i++){
-            	if(int(s[i]) == 48){ d = 0; v.push_back(d); }
-            	else if(int(s[i]) == 49){ d = 1; v.push_back(d); }
-            	else if(int(s[i]) == 50){ d = 2; v.push_back(d); }
-            	else if(int(s[i]) == 51){ d = 3; v.push_back(d); }
-            	else if(int(s[i]) == 52){ d = 4; v.push_back(d); }
-            	else if(int(s[i]) == 53){ d = 5; v.push_back(d); }
-            	else if(int(s[i]) == 54){ d = 6; v.push_back(d); }
-            	else if(int(s[i]) == 55){ d = 7; v.push_back(d); }
-            	else if(int(s[i]) == 56){ d = 8; v.push_back(d); }
-            	else if(int(s[i]) == 57){ d = 9; v.push_back(d); }
-            	else if( !v.empty() ){ break; }
-            	else{ continue; }
+// Struktury danych
+struct MEMORY_INFO {
+        int tot;
+        int av;
+};
+
+struct CPU_STATIC_INFO {
+        std::string cores;
+        std::string vendor;
+        std::string cpufamily;
+        std::string modelname;
+        std::string mhz;
+        std::string cachesize;
+};
+
+// Główny kontener na dane
+struct STATE {
+        MEMORY_INFO mem;
+        CPU_STATIC_INFO cpus;
+};
+
+
+// Funkcja do zczytywania danych o RAM
+void read_mem(STATE &state){
+
+        std::string line;
+        std::map<std::string, int> config;
+        std::ifstream infoMem("/proc/meminfo");
+
+        if(!infoMem.is_open()){
+                std::cerr<<"Blad otwarcia pliku"<<std::endl;
         }
 
-    	for(int i = 0; i<v.size(); i++){
-        	m = v[i] * pow(10, v.size() - i - 1);
-        	result += m; 
-    	}
+        while(std::getline(infoMem, line)){
 
-    	return result;
+                std::stringstream ss(line);
+                std::string key;
+                int val;
+                ss >> key >> val;
+
+                if(!key.empty()){
+                        config[key] = val;
+                }
+        }
+        if(config.count("MemTotal:")) { state.mem.tot = config["MemTotal:"]; }
+        if(config.count("MemAvailable:")) { state.mem.av = config["MemAvailable:"]; }
 }
 
-// funkcja do zczytywania danych o RAM
-void read_mem(){
-	int val;
-	string line;
-	ifstream infoMem("/proc/meminfo");
-
-	if(!infoMem.is_open()){
-		cerr<<"Blad otwarcia pliku"<<endl;
-	}
-
-	for(int i=1; i<10; i++){
-		getline(infoMem, line);
-		val = myAtoi(line);
-	       	cout<<line.substr(0, 13)<<" "<<val<<endl;	
-	}
-}
 
 // funkcja do zczytywania danych statycznych o CPU
-void read_cpu(){
-	string line;
-	int k=0;
-	ifstream infoCpu("/proc/cpuinfo");
+void read_cpus(STATE &state){
 
-	if(!infoCpu.is_open()){
-		cerr<<"Blad otwarcia pliku"<<endl;
-	}
-	// do dokończenia
-}
+        std::string line;
+        std::map<std::string, std::string> config;
+        std::ifstream infoCpu("/proc/cpuinfo");
 
+        if(!infoCpu.is_open()){
+                std::cerr<<"Blad otwarcia pliku"<<std::endl;
+        }
 
-// funkcja do zczytywania danych dynamicznych o CPU
-void read_cpu_stats(){
+        while(std::getline(infoCpu, line)){
+
+                std::stringstream ss(line);
+                std::string key, val;
+                if(!std::getline(ss, key, ':')) continue;
+
+                std::getline(ss, val);
+
+                while(!key.empty() && (key.back() == '\t' || key.back() == ' ')) {
+                        key.pop_back();
+                }
+
+                size_t first_char = val.find_first_not_of(" \t");
+
+                if(first_char != std::string::npos) {
+                        val = val.substr(first_char);
+                }
+                else{
+                        val = "";
+                }
+
+                if(!key.empty()){
+                        config[key] = val;
+                }
+			
+                if(line.empty() && !config.empty()) break;
+        }
 	
+        if(config.count("cpu cores")) { state.cpus.cores = config["cpu cores"]; }
+        if(config.count("vendor_id")) { state.cpus.vendor = config["vendor_id"]; }
+        if(config.count("cpu family")) { state.cpus.cpufamily = config["cpu family"]; }
+        if(config.count("model name")) { state.cpus.modelname = config["model name"]; }
+        if(config.count("cpu MHz")) { state.cpus.mhz = config["cpu MHz"]; }
+        if(config.count("cache size")) { state.cpus.cachesize = config["cache size"]; }
 }
-
 
 int main(){
-	
-	read_mem();
-	read_cpu();
-	
-	return 0;
+
+        STATE state;
+        read_mem(state);
+        read_cpus(state);
+
+        return 0;
 }
