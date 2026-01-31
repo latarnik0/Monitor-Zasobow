@@ -1,5 +1,6 @@
 #include <fstream>
 #include <string>
+#include <cstring>
 #include <sstream>
 #include <iostream>
 #include <cerrno>
@@ -7,7 +8,10 @@
 #include <map>
 #include <chrono>
 #include <thread>
+#include <cstdlib>
+#include <ctime>
 
+#define PATH "/home/user/monitorRes/getdata.sh"
 
 // Struktury danych
 struct MEMORY_INFO {
@@ -24,12 +28,25 @@ struct CPU_STATIC_INFO {
         std::string cachesize;
 };
 
+struct PROCESS_INFO {
+        int interr;
+        int contextSwitches;
+        int bootTime;
+        int allProcs;
+        int runningProcs;
+        int blockedProcs;
+};
+
+
 // Główny kontener na dane
 struct STATE {
         MEMORY_INFO mem;
         CPU_STATIC_INFO cpus;
 };
 
+void script(){
+        system(PATH);
+}
 
 // Funkcja do zczytywania danych o RAM
 void read_mem(STATE &state){
@@ -106,37 +123,83 @@ void read_cpus(STATE &state){
 }
 
 
+void read_cpud(STATE &state){
+        std::string line;
+        std::ifstream data("/home/user/monitorRes/cpud.txt");
+
+        if(!data.is_open()){
+                std::cerr<<"Blad otwarcia pliku (cpud)"<<std::endl;
+        }
+
+        while(std::getline(data, line)){
+                // DO ZROBIENIA
+        }
+
+}
+
+
+void read_procs(STATE &state){
+        std::string line;
+        std::map<std::string, int> config;
+        std::ifstream infoProcs("/home/user/monitorRes/procs.txt");
+
+        if(!infoProcs.is_open()){
+                std::cerr<<"Blad otwarcia pliku (processes)"<<std::endl;
+        }
+
+        while(std::getline(infoProcs, line)){
+
+                std::stringstream ss(line);
+                std::string key;
+                int val;
+                ss >> key >> val;
+
+                if(!key.empty()){
+                        config[key] = val;
+                }
+        }
+        if(config.count("intr")) { state.proc.interr = config["intr"]; }
+        if(config.count("ctxt")) { state.proc.contextSwitches = config["ctxt"]; }
+        if(config.count("btime")) { state.proc.bootTime = config["btime"]; }
+        if(config.count("processes")) { state.proc.allProcs = config["processes"]; }
+        if(config.count("procs_running")) { state.proc.runningProcs = config["procs_running"]; }
+        if(config.count("procs_blocked")) { state.proc.blockedProcs = config["procs_blocked"]; }
+}
+
+
+
 void print_res(STATE &state){
-	int max_x, max_y;
-    getmaxyx(stdscr, max_y, max_x);
-	
-	for(int i=0; i<186; i++){
-		mvprintw(0, i, "_");
-    }
 
-    attron(A_REVERSE | A_BOLD);
-    mvprintw(1, 85, "MONITOR ZASOBOW");
-    attroff(A_REVERSE | A_BOLD);
+        int max_x, max_y;
+        getmaxyx(stdscr, max_y, max_x);
+
+//----------------------------------STATIC INFO----------------------------------------------------------
+        mvprintw(2, 20, "STATIC INFO");
+        mvprintw(4, 0, "CPU Vendor: %s", (state.cpus.vendor).c_str());
+        mvprintw(5, 0, "CPU Family: %s", (state.cpus.cpufamily).c_str());
+        mvprintw(6, 0, "CPU Model Name: %s", (state.cpus.modelname).c_str());
+        mvprintw(7, 0, "CPU Cores: %s", (state.cpus.cores).c_str());
+        mvprintw(8, 0, "CPU Clock Speed: %d", stoi(state.cpus.mhz));
+        printw(" MHz");
 
 
-    for(int i=0; i<186; i++){
-		mvprintw(2, i, "_");
-    }
-	
-	for(int i=3; i<46; i++){
-		mvprintw(i, 62, "|");
-    }
 
-    mvprintw(3, 20, "MEMORY");
-	
-	for(int i=0; i<62; i++){
-		mvprintw(4, i, "_");
-	}
-	
-    mvprintw(5, 0, "Total RAM: %d", state.mem.tot);
-    printw(" KB = %.2f MB = %.2f GB", static_cast<float> (state.mem.tot / 1000.0), static_cast<float> (state.mem.tot / 1000000.0));
-    mvprintw(6, 0, "Available RAM: %d", state.mem.av);
-    printw(" KB = %.2f MB = %.2f GB", static_cast<float> (state.mem.av / 1000.0), static_cast<float> (state.mem.av / 1000000.0));
+
+//----------------------------------ZASOBY---------------------------------------------------------------------------------------       
+        mvprintw(10, 20, "RESOURCES");
+
+        mvprintw(12, 0, "Total RAM: %.2f", static_cast<float> (state.mem.tot / 1000.0));
+        printw(" MB");
+        mvprintw(13, 0, "Available RAM: %.2f", static_cast<float> (state.mem.av / 1000.0));
+        printw(" MB");
+        mvprintw(14, 0, "Usage: %.2f", static_cast<float> (((state.mem.tot/1000.0) - (state.mem.av/1000.0) ) / (state.mem.tot/1000.0) * 100.0));
+        printw("%%");
+
+        mvprintw(2, 115, "PROCESSES");
+        mvprintw(4, 110, "Interruptions (since boot): %d", state.proc.interr);
+        mvprintw(5, 110, "Context switches: %d", state.proc.contextSwitches);
+        mvprintw(6, 110, "Running processes: %d", state.proc.runningProcs);
+        mvprintw(7, 110, "Blocked processes (I/O wait): %d", state.proc.blockedProcs);
 
 }
 
@@ -149,23 +212,15 @@ int main(){
     curs_set(0);
     nodelay(stdscr, TRUE);
 
-    char ch = getch();
-
     while(true){
-		char ch = getch();
-        if(ch == 'q'){
-                break;
-        }
-        else{
-                STATE state;
+		STATE state;
 
-                read_mem(state);
-                read_cpus(state);
+        read_mem(state);
+        read_cpus(state);
 
-                print_res(state);
-                refresh();
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
+        print_res(state);
+        refresh();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));   
 	}	
 	return 0;
 }
