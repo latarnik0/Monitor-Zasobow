@@ -32,5 +32,5 @@ The goal of this project was to expand knowledge and the understanding of **Oper
 
 ## Additional Info
 * Project start date: **january 2026**
-* Last update: **07.02.2026**
+* Last update: **09.02.2026**
 * Status: **under development**
