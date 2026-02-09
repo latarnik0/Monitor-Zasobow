@@ -11,6 +11,9 @@
 #include <thread>
 #include <cstdlib>
 #include <ctime>
+#include <filesystem>
+#include <algorithm>
+#include <cctype>
 
 // DATA STRUCTS
 struct MEMORY_INFO {
@@ -46,6 +49,12 @@ struct PROCESS_INFO {
 	int uptimeH, uptimeM, uptimeS;
 };
 
+struct PSAUX {
+	int kthrd;
+	int uthrd;
+	std::string paththrd;
+};
+
 struct DISK_INFO {
 	std::vector<std::string> disks;
 };
@@ -60,6 +69,7 @@ struct STATE {
 	CPU_DYNAMIC_INFO curr;
 	PROCESS_INFO proc;
 	DISK_INFO disk;
+	PSAUX psaux;
 };
 
 
@@ -191,7 +201,7 @@ void read_cpud(STATE &state){
     activeDiff = currActive - prevActive;
     totalDiff = (currIdle - prevIdle)+(currActive - prevActive);
     
-    state.curr.usage = ((float)activeDiff / (float)totalDiff)*100.0;
+    state.curr.usage = ((static_cast<float>(activeDiff)) / (static_cast<float> (totalDiff*100.0)));
 }
 
 
@@ -248,13 +258,52 @@ void read_procs(STATE &state){
 }
 
 
-
-// READ DISKS USAGE
-void read_disk(STATE &state){
-	// to do  
+bool is_number(const std::string& s){
+	if(isdigit(s[0])){
+		return true;
+	}
+	else return false;
 }
 
+// PROCS INFO ps aux
+void count_active_ps(STATE &state){
+	
+	state.psaux.kthrd = 0;
+	state.psaux.uthrd = 0;
+	try {
+                for (const auto& entryP : std::filesystem::directory_iterator("/proc")) {
+                        if (!entryP.is_directory()) continue;
 
+                        std::string nameP = entryP.path().filename().string();
+                        if(!is_number(nameP)) continue;
+
+                        std::filesystem::path taskPath = std::filesystem::path("/proc") / nameP / "task";
+
+                        if(!std::filesystem::exists(taskPath)) continue;
+
+                        try {
+
+                                for (const auto& entryT : std::filesystem::directory_iterator(taskPath)) {
+
+                                        std::filesystem::path cmdPath = entryT.path() / "cmdline";
+                                        std::ifstream cmd(cmdPath);
+
+                                        if(!cmd.is_open()) continue;
+
+                                        if(cmd.peek() == std::ifstream::traits_type::eof()){
+                                                state.psaux.kthrd++;
+                                        }
+                                        else{
+                                                state.psaux.uthrd++;
+                                        }
+                                        cmd.close();
+                                }
+                        } catch (const std::filesystem::filesystem_error& e) { continue; }
+                }
+        } catch (const std::filesystem::filesystem_error& e) {
+		std::cerr<<"Permission denied: cannot access file"<<std::endl;
+        }
+}
 
 // PRINT STATE
 void print_res(STATE &state){
@@ -352,8 +401,10 @@ void print_res(STATE &state){
         printw(" %%");
 	
 
-	mvprintw(0, 170, "Uptime: %02d:%02d:%02d", state.proc.uptimeH, state.proc.uptimeM, state.proc.uptimeS);
-	
+	mvprintw(0, 140, "Uptime: %02d:%02d:%02d", state.proc.uptimeH, state.proc.uptimeM, state.proc.uptimeS);
+	mvprintw(2, 140, "Kernel threads: %d", state.psaux.kthrd);
+	mvprintw(3, 140, "User threads: %d", state.psaux.uthrd);
+	mvprintw(4, 140, "All tasks: %d", state.psaux.uthrd + state.psaux.kthrd);
 }
 
 
@@ -377,7 +428,7 @@ int main(){
 		read_mem(state);
 		read_cpus(state);
 		read_cpud(state);
-		read_disk(state);
+		count_active_ps(state);
 			
 		print_res(state);
 		refresh();
