@@ -15,11 +15,13 @@ int main(){
 	STATE state;
 	timeout(500);
 
+	read_cpus(state);
+	read_sysinfo(state);
+
 	while(true){
 		read_procs(state);
 		read_uptime(state);
 		read_mem(state);
-		read_cpus(state);
 		read_cpud(state);
 		count_active_ps(state);
 		read_network(state);

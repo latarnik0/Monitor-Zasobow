@@ -49,6 +49,12 @@ struct NETWORK {
 	unsigned long rx;
 };
 
+struct SYSINFO {
+	std::string os;
+	std::string kver;
+	std::string hostname;
+}; 
+
 struct DISK_INFO {
 	// TODO
 };
@@ -64,4 +70,5 @@ struct STATE {
 	DISK_INFO disk;
 	PSAUX psaux;
 	NETWORK net;
+	SYSINFO sys;
 };

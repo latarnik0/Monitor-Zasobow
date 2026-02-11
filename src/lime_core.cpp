@@ -277,3 +277,18 @@ void read_network(STATE &state){
     }
 }
 
+
+void read_sysinfo(STATE &state){
+	std::ifstream dataOS("/proc/sys/kernel/ostype");
+	std::ifstream dataVer("/proc/sys/kernel/osrelease");
+	std::ifstream dataHost("/proc/sys/kernel/hostname");
+	
+	if(!dataOS.is_open()) { std::cerr<<"Cannot open file: ostype"<<std::endl; }
+	if(!dataVer.is_open()) { std::cerr<<"Cannot open file: osrelease"<<std::endl; }
+	if(!dataHost.is_open()) { std::cerr<<"Cannot open file: hostname"<<std::endl; }
+	
+	std::getline(dataOS, state.sys.os);
+	std::getline(dataVer, state.sys.kver);
+	std::getline(dataHost, state.sys.hostname);
+
+}

@@ -172,4 +172,7 @@ void print_res(STATE &state){
 	mvprintw(3, 140, "User threads: %d", state.psaux.uthrd);
 	mvprintw(4, 140, "Receive (bytes): %ld", state.net.rx);
 	mvprintw(5, 140, "Transmit (bytes): %ld", state.net.tx);
+	mvprintw(6, 140, "OS: %s", (state.sys.os).c_str());
+	mvprintw(7, 140, "kernel: %s", (state.sys.kver).c_str());
+	mvprintw(8, 140, "hostname: %s", (state.sys.hostname).c_str());
 }
