@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/lime_refactored.dir/src/main.cpp.o CMakeFiles/lime_refactored.dir/src/lime_core.cpp.o CMakeFiles/lime_refactored.dir/src/ui.cpp.o -o lime_refactored  -lcurses /usr/lib/x86_64-linux-gnu/libform.so 
