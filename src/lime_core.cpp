@@ -31,8 +31,11 @@ void read_mem(STATE &state){
 	}
 	if(config.count("MemTotal:")) { state.mem.tot = config["MemTotal:"]; }
 	if(config.count("MemAvailable:")) { state.mem.av = config["MemAvailable:"]; }
+	if(config.count("SwapTotal:")) { state.mem.swapt = config["SwapTotal:"]; }
+	if(config.count("SwapFree:")) { state.mem.swapf = config["SwapFree:"]; }
 	
-	state.mem.usg = ((state.mem.tot - state.mem.av)*100)  / state.mem.tot; 
+	state.mem.usg = ((state.mem.tot - state.mem.av)*100)  / state.mem.tot;
+       state.mem.swapusg = ((state.mem.swapt - state.mem.swapf)*100)  / state.mem.swapt;	
 }
 
 // READ CPU STATIC INFO

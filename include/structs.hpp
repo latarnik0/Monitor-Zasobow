@@ -2,11 +2,13 @@
 #include <string>
 #include <vector>
 
-// Tutaj wklejamy wszystkie Twoje structy
 struct MEMORY_INFO {
 	int tot;
 	int av;
 	int usg;
+	int swapt;
+	int swapf;
+	int swapusg;
 };
 
 struct CPU_STATIC_INFO {
@@ -20,18 +22,18 @@ struct CPU_STATIC_INFO {
 
 struct CPU_DYNAMIC_INFO {
 	long user, nice, system, idle;
-    long iowait, irq, softirq;
+    	long iowait, irq, softirq;
 	float usage;
 	int usageInt;
 };
 
 struct PROCESS_INFO {
 	int interr;
-    int contextSwitches;
+   	int contextSwitches;
 	int bootTime;
-    int allProcs;
-    int runningProcs;
-    int blockedProcs;
+    	int allProcs;
+    	int runningProcs;
+    	int blockedProcs;
 	long uptimeRaw;
 	int uptimeH, uptimeM, uptimeS;
 };
@@ -51,7 +53,8 @@ struct DISK_INFO {
 	// TODO
 };
 
-// GŁÓWNA STRUKTURA
+
+// MAIN STRUCTURE
 struct STATE {
 	MEMORY_INFO mem;
 	CPU_STATIC_INFO cpus;

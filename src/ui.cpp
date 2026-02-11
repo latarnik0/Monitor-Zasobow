@@ -78,15 +78,26 @@ void print_res(STATE &state){
     attroff(COLOR_PAIR(3));
     attroff(A_BOLD);
     attroff(A_STANDOUT);
-
-
-    mvprintw(4, 70, "Total RAM : %.2f", static_cast<float> (state.mem.tot / 1000.0));
+	
+    	
+	// RAM 
+    mvprintw(4, 70, "RAM total : %.2f", static_cast<float> (state.mem.tot / 1000.0));
 	printw(" MB");
-    mvprintw(5, 70, "Available RAM : %.2f", static_cast<float> (state.mem.av / 1000.0));
+    mvprintw(5, 70, "RAM available : %.2f", static_cast<float> (state.mem.av / 1000.0));
 	printw(" MB");
 	mvprintw(6, 70, "Usage : %.2f", static_cast<float> (((state.mem.tot/1000.0) - (state.mem.av/1000.0) ) / (state.mem.tot/1000.0) * 100.0));
 	printw("%%");
-	mvprintw(7, 70, "[");
+	
+	// swap mem
+	mvprintw(8, 70, "Swap total : %.2f", static_cast<float> (state.mem.swapt / 1000.0));
+        printw(" MB");
+    	mvprintw(9, 70, "Swap free : %.2f", static_cast<float> (state.mem.swapf / 1000.0));
+        printw(" MB");
+        mvprintw(10, 70, "Usage : %.2f", static_cast<float> (((state.mem.swapt/1000.0) - (state.mem.swapf/1000.0) ) / (state.mem.swapt/1000.0) * 100.0));
+        printw("%%");
+
+	mvprintw(12, 70, "RAM");
+	mvprintw(13, 70, "[");
 	for(int i=0; i<50; i++){
         if(i<state.mem.usg/2){
             if(i<=30){
@@ -112,21 +123,21 @@ void print_res(STATE &state){
                 }
         }
 
-	mvprintw(7, 120, "]");
+	mvprintw(13, 120, "]");
 
 
 	attron(COLOR_PAIR(3));
         attron(A_BOLD);
         attron(A_STANDOUT);
-        mvprintw(10, 80, "CPU Usage");
+        mvprintw(15, 80, "CPU Usage");
         attroff(COLOR_PAIR(3));
         attroff(A_BOLD);
         attroff(A_STANDOUT);
 
-        mvprintw(11, 70, "All cores: %.2f", state.curr.usage);
+        mvprintw(16, 70, "All cores: %.2f", state.curr.usage);
         printw(" %%");
 
-	mvprintw(12, 70, "[");
+	mvprintw(18, 70, "[");
 
 	for(int i=0; i<50; i++){
                 if(i<state.curr.usageInt/2){
@@ -152,7 +163,7 @@ void print_res(STATE &state){
 			attroff(COLOR_PAIR(7));
 		}
         }
-        mvprintw(12, 120, "]");
+        mvprintw(18, 120, "]");
 
 
 
