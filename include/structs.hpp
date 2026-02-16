@@ -21,19 +21,19 @@ struct CPU_STATIC_INFO {
 };
 
 struct CPU_DYNAMIC_INFO {
-	long user=0, nice=0, system=0, idle=0;
-    long iowait=0, irq=0, softirq=0;
-	float usage=0;
-	int usageInt=0;
+	unsigned long long user=0, nice=0, system=0, idle=0, iowait=0, irq=0, softirq=0;
+	float usage=0.0f;
+	float smoothUsage=0.0f;
+	unsigned long long prevTotal=0, prevIdle=0;
 };
 
 struct PROCESS_INFO {
 	int interr=0;
    	int contextSwitches=0;
 	int bootTime=0;
-    int allProcs=0;
-    int runningProcs=0;
-    int blockedProcs=0;
+    	int allProcs=0;
+    	int runningProcs=0;
+    	int blockedProcs=0;
 	long uptimeRaw=0;
 	int uptimeH=0, uptimeM=0, uptimeS=0;
 };
@@ -45,10 +45,9 @@ struct PSAUX {
 };
 
 struct NETWORK {
-	unsigned long tx=0;
-	unsigned long rx=0;
-	unsigned long rxDynamic;
-	unsigned long txDynamic;
+	unsigned long long txPrev=0;
+ 	unsigned long long rxPrev=0;
+	unsigned long long rxDiff=0, txDiff=0;
 };
 
 struct SYSINFO {
@@ -66,12 +65,10 @@ struct DISK_INFO {
 struct STATE {
 	MEMORY_INFO mem;
 	CPU_STATIC_INFO cpus;
-	CPU_DYNAMIC_INFO prev;
-	CPU_DYNAMIC_INFO curr;
+	CPU_DYNAMIC_INFO cpud;
 	PROCESS_INFO proc;
 	DISK_INFO disk;
 	PSAUX psaux;
-	NETWORK netprev;
-	NETWORK netcur;
+	NETWORK net;
 	SYSINFO sys;
 };

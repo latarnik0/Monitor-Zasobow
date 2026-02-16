@@ -106,45 +106,39 @@ void print_res(STATE &state){
 	attron(A_BOLD); 
     	mvprintw(16, 0, "RAM total: ");
 	attroff(A_BOLD);
-	printw("%.2f", static_cast<float> (state.mem.tot / 1000.0));
-	printw(" MB");
+	printw("%10.2f MB", (state.mem.tot / 1024.0f));
 
 	attron(A_BOLD);
     	mvprintw(17, 0, "RAM available: ");
 	attroff(A_BOLD);
-	printw("%.2f", static_cast<float> (state.mem.av / 1000.0));
-	printw(" MB");
+	printw("%10.2f MB",(state.mem.av / 1024.0f));
 		
 	// swap mem
 	attron(A_BOLD);
 	mvprintw(18, 0, "Swap total: ");
 	attroff(A_BOLD);	
-	printw("%.2f", static_cast<float> (state.mem.swapt / 1000.0));
-        printw(" MB");
+	printw("%8.2f MB", (state.mem.swapt / 1024.0f));
 
 	attron(A_BOLD);
     	mvprintw(19, 0, "Swap available: "); 
 	attroff(A_BOLD);
-	printw("%.2f", static_cast<float> (state.mem.swapf / 1000.0));
-        printw(" MB");
+	printw("%8.2f MB", (state.mem.swapf / 1024.0f));
 	
 
 	attron(A_BOLD);
         mvprintw(20, 0, "RAM usage: ");
         attroff(A_BOLD);
-        printw("%.2f", static_cast<float> (((state.mem.tot/1000.0) - (state.mem.av/1000.0) ) / (state.mem.tot/1000.0) * 100.0));
-        printw("%%");
+        printw("%10.2f %%", ((state.mem.tot - state.mem.av ) / (state.mem.tot * 100.0f)));
 
 	attron(A_BOLD);
         mvprintw(21, 0, "Swap usage: ");
 	attroff(A_BOLD);
-	printw("%.2f", static_cast<float> (((state.mem.swapt/1000.0) - (state.mem.swapf/1000.0) ) / (state.mem.swapt/1000.0) * 100.0));
-        printw("%%");
+	printw("%10.2f %%", (((state.mem.swapt - state.mem.swapf) ) / (state.mem.swapt * 100.0f)));
+	
 	attron(A_BOLD);
         mvprintw(22, 0, "CPU usage: ");
         attroff(A_BOLD);
-	printw("%.2f", state.curr.usage);
-        printw(" %%");
+	printw("%10.2f %%", state.cpud.smoothUsage);
 
 
 	mvprintw(23, 0, "[");
@@ -210,7 +204,7 @@ mvprintw(24, 0, "[");
 	mvprintw(25, 0, "[");
 
 	for(int i=0; i<20; i++){
-                if(i<state.curr.usageInt/4){
+                if(i<(int)state.cpud.usage/4){
 			if(i<=10){
                         	attron(COLOR_PAIR(4));
                         	printw("|");
@@ -236,7 +230,7 @@ mvprintw(24, 0, "[");
         mvprintw(25, 20, "CPU");
 	printw("]");
 
-attron(COLOR_PAIR(8));
+	attron(COLOR_PAIR(8));
         attron(A_BOLD);
         attron(A_STANDOUT);
         mvprintw(28, 0, "NETWORK              ");
@@ -255,14 +249,12 @@ attron(COLOR_PAIR(8));
 	attron(A_BOLD);
 	mvprintw(30, 0, "Received: ");
 	attroff(A_BOLD);
-	printw("%ld", state.netcur.rxDynamic);
-        printw(" B");
+	printw("%13.2f KB/s", state.net.rxDiff/1024.0f);
 
 	attron(A_BOLD);
         mvprintw(31, 0, "Transmitted: ");
 	attroff(A_BOLD);
-	printw("%ld", state.netcur.txDynamic);
-        printw(" B");
+	printw("%10.2f KB/s", state.net.txDiff/1024.0f);
 
 
 

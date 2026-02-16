@@ -90,60 +90,45 @@ void read_cpus(STATE &state){
 
 // READ CPU USAGE
 void read_cpud(STATE &state){
-
-    std::string line, label;
-    int prevActive, prevIdle, currActive, currIdle;
-    int activeDiff, totalDiff;
     std::ifstream data("/proc/stat");
-
+    
     if(!data.is_open()){
-	    std::cerr<<"Cannot open file stat (time interval 1)"<<std::endl;
+        std::cerr << "Cannot open file stat" << std::endl;
+        return; 
     }
 
+    std::string line, label;
+
+    unsigned long long currActive = 0, currIdle = 0, currTotal = 0;
+    unsigned long long user=0, nice=0, system=0, idle=0, iowait=0, irq=0, softirq=0, steal=0;
+
     while(std::getline(data, line)){
-	    std::stringstream ss(line);
-	    ss >> label;
-	    
-	    if(label == "cpu"){
-		    ss >> state.prev.user >> state.prev.nice>>state.prev.system>>state.prev.idle>>state.prev.iowait>>state.prev.irq>>state.prev.softirq;
-		    
-		    prevActive = state.prev.user + state.prev.nice +state.prev.system+state.prev.irq+state.prev.softirq;
-		    prevIdle = state.prev.idle+state.prev.iowait;
-		    
-		    break;
-	    }
+        std::stringstream ss(line);
+        ss >> label;
+        
+        if(label == "cpu"){
+            ss >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal;
+            
+            currActive = user + nice + system + irq + softirq + steal;
+            currIdle = idle + iowait;
+            currTotal = currActive + currIdle;
+
+            break; 
+        }
     }
     data.close();
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    std::ifstream data2("/proc/stat");
-    std::string line2, label2;
+    unsigned long long totalDiff = currTotal - state.cpud.prevTotal;
+    unsigned long long idleDiff = currIdle - state.cpud.prevIdle;
 
-    if(!data2.is_open()){
-    	std::cerr<<"Cannot open file stat (time interval 2)"<<std::endl;
+    if(totalDiff > 0){
+        state.cpud.usage = (static_cast<float>(totalDiff - idleDiff) / static_cast<float>(totalDiff)) * 100.0f;
+	state.cpud.smoothUsage = 0.7f * state.cpud.smoothUsage + 0.3f * state.cpud.usage;
     }
-    while(std::getline(data2, line2)){
-	    std::stringstream ss2(line2);
-	    ss2 >> label2;
-	    
-	    if(label2 == "cpu"){
-		    ss2 >> state.curr.user >> state.curr.nice>>state.curr.system>>state.curr.idle>>state.curr.iowait>>state.curr.irq>>state.curr.softirq;
-		    
-		    currActive = state.curr.user + state.curr.nice + state.curr.system + state.curr.irq+state.curr.softirq;
-		    currIdle = state.curr.idle + state.curr.iowait;
-		    break;
-	    }
-    }
-    data2.close();
     
-    activeDiff = currActive - prevActive;
-    totalDiff = (currIdle - prevIdle)+(currActive - prevActive);
-    
-    state.curr.usage = ((static_cast<float>(activeDiff)) / (static_cast<float> (totalDiff*100.0)));
-	state.curr.usageInt = static_cast<int>(state.curr.usage);
+    state.cpud.prevIdle = currIdle;
+    state.cpud.prevTotal = currTotal;
 }
-
-
 
 // READ UPTIME
 void read_uptime(STATE &state){
@@ -247,9 +232,9 @@ void count_active_ps(STATE &state){
 void read_network(STATE &state){
     std::ifstream data("/proc/net/dev");
     std::string line;
-    int ignoreThis;
-    unsigned long rxPrev=0, txPrev=0, rxCurr=0, txCurr=0;
-    unsigned long rxDiff, txDiff;
+    unsigned long long ignoreThis;
+    unsigned long long rxTemp=0, txTemp=0;
+    unsigned long long rxCurr=0, txCurr=0;
 
     std::getline(data, line);
     std::getline(data, line);
@@ -262,54 +247,26 @@ void read_network(STATE &state){
 
             if(interfaceName == "lo:") { continue; }
             else{
-		    ss >> rxPrev;
-		    state.netprev.rx += rxPrev;
+		    ss >> rxTemp;
+		    rxCurr += rxTemp;
 
                 for(int i=0; i<7; i++){
 			ss >> ignoreThis;
                 }
 
-                ss >> txPrev;
-                state.netprev.tx += txPrev;
+                ss >> txTemp;
+                txCurr += txTemp;
             }
     }
-  
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-
-    std::ifstream data2("/proc/net/dev");
-    std::string line2;
-    int ignoreThis2;
-
-    std::getline(data2, line2);
-    std::getline(data2, line2);
-
-    while(std::getline(data2, line2)){
-            std::stringstream ss2(line2);
-            std::string interfaceName2;
-
-            ss2 >> interfaceName2;
-
-            if(interfaceName2 == "lo:") { continue; }
-            else{
-		    ss2 >> rxCurr;
-		    state.netcur.rx += rxCurr;
-
-                for(int i=0; i<7; i++){
-			ss2 >> ignoreThis2;
-                }
-
-                ss2 >> txCurr;
-                state.netcur.tx += txCurr;
-            }
+    data.close();
+    if(state.net.rxPrev > 0){
+    	state.net.rxDiff = rxCurr - state.net.rxPrev;
+    	state.net.txDiff = txCurr - state.net.txPrev;
     }
-    rxDiff = state.netcur.rx - state.netprev.rx;
-    txDiff = state.netcur.tx - state.netprev.tx;
 
-    state.netcur.rxDynamic = rxDiff;
-    state.netcur.txDynamic = txDiff;
-
+    state.net.rxPrev = rxCurr;
+    state.net.txPrev = txCurr;
 }
-
 
 
 void read_sysinfo(STATE &state){
@@ -331,19 +288,24 @@ void gather_data(STATE &state, std::mutex &m, std::atomic<bool> &run){
 	while(run){
 		STATE temp_state;
 		
+		read_cpud(temp_state); // first call of cpud
+                read_network(temp_state); // first call of network
+
 		read_cpus(temp_state);
 		read_sysinfo(temp_state);
                 read_procs(temp_state);
                 read_uptime(temp_state);
                 read_mem(temp_state);
-                read_cpud(temp_state);
-                count_active_ps(temp_state);
-                read_network(temp_state);
+		count_active_ps(temp_state);
+
+                read_cpud(temp_state); // second call of cpud
+                read_network(temp_state); // second call of network
 		
 		{
 			std::lock_guard<std::mutex> lock(m);
 			state = temp_state;
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	}
 }
 
