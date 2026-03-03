@@ -302,21 +302,29 @@ void print_res(STATE &state, int scroll_offset, int selectedPID){
 	mvprintw(42, 0, "Write: %8.2f KB/s", static_cast<float>(state.disks.writeDiff/1024.0f));
 
 	attron(COLOR_PAIR(4) | A_BOLD);
-	mvprintw(max_y-3, 0, "Uptime: ");
+	mvprintw(max_y-6, 0, "Uptime: ");
 	attroff(COLOR_PAIR(4) | A_BOLD);
 	printw("%02d:%02d:%02d", state.proc.uptimeH, state.proc.uptimeM, state.proc.uptimeS);
 	
 	attron(A_BOLD);
-        mvprintw(max_y-2, 0, "Kernel threads: ");
+        mvprintw(max_y-5, 0, "Kernel threads: ");
         attroff(A_BOLD);
         printw("%d", state.psaux.kthrd);
 
         attron(A_BOLD);
-        mvprintw(max_y-1, 0, "User threads: ");
+        mvprintw(max_y-4, 0, "User threads: ");
         attroff(A_BOLD);
         printw("%d", state.psaux.uthrd);
 
-
+	mvprintw(max_y-2, 0, "To quit press ");
+       	attron(A_BOLD);
+	printw("'q'");
+	attroff(A_BOLD);
+	
+	mvprintw(max_y-1, 0, "To kill a process click on it and press ");
+	attron(A_BOLD);
+        printw("'k'");
+        attroff(A_BOLD);
 
 	int pstarty = 0;
 	int pstartx = 59;

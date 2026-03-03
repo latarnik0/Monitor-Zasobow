@@ -12,9 +12,8 @@ The goal of this project was to expand knowledge and the understanding of **Oper
 * **CPU Usage:** Displays CPU usage in real time by calculating raw data from `/proc/stat`.
 * **Network Stats:** Displays the KB/s received and transmitted using data from `proc/net/dev`.
 * **Disks usage:** Dispalys disks memory usage and real-time read/write values.
-* **Processess:** Lists active processes. Counts active User and Kernel threads.
+* **Processess:** Lists active processes. Counts active User and Kernel threads. User can kill selected processess.
 * **Uptime:** Displays uptime.
-* **TUI Interface:** Intuitive terminal interface using `ncurses`.
 
 ## Technical Highlights
 
@@ -25,6 +24,7 @@ The goal of this project was to expand knowledge and the understanding of **Oper
     * **Data processing:** Efficient parsing of complex, whitespace-delimited kernel data files and using `std::regex` to extract data.
     * **STL Containers:** Using `std::vector` and `std::map` for dynamic process lists.
     * **Work with filesystems:** Using `std::filesystem` to move through and check directories.
+    * **Ncurses library:** Using `ncurses` to build intuitive terminal interface and manage keyboard and mouse input.
 
 ## Prerequisites
 * Linux environment (Ubuntu/Debian/Arch/Fedora)
@@ -34,5 +34,5 @@ The goal of this project was to expand knowledge and the understanding of **Oper
 
 ## Additional Info
 * Project start date: **january 2026**
-* Last update: **01.03.2026**
-* Status: **under development**
+* Last update: **03.03.2026**
+* Status: **finished**
